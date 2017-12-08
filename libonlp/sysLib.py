@@ -1,7 +1,38 @@
+"""
+ *
+ *           Copyright 2017 (C) Delta Networks, Inc.
+ *
+ * Licensed under the Eclipse Public License, Version 1.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ *
+ *        http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific
+ * language governing permissions and limitations under the
+ * License.
+ *
+ Description: ONLP System module
+"""
 import ctypes
 from time import sleep
+import os, re
 
-syslib = ctypes.CDLL('/lib/arm-linux-gnueabi/libonlp.so')
+def platform():
+    f = os.popen('uname -a')
+    output = f.read()
+    if re.search("x86_64",output):
+        return '/lib/x86_64-linux-gnu/libonlp.so'
+    elif re.search("arm",output):
+        return '/lib/arm-linux-gnueabi/libonlp.so'
+    else :
+        return '/lib/x86_64-linux-gnu/libonlp.so'
+
+LIB_ONLP=platform()
+syslib = ctypes.CDLL(LIB_ONLP)
 
 class onlp_onie_info_t(ctypes.Structure):
     _fields_ = [("product_name",ctypes.c_char_p),
