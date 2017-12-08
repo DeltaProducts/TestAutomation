@@ -20,8 +20,8 @@
 
 import ctypes
 from time import sleep
-
-ledlib = ctypes.CDLL('/lib/x86_64-linux-gnu/libonlp.so')
+from sysLib import *
+ledlib = ctypes.CDLL(LIB_ONLP)
 
 #onlp_led_status
 class onlp_led_status_t(ctypes.Structure):

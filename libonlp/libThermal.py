@@ -19,8 +19,8 @@
 """
 import ctypes
 from time import sleep
-
-ThermalLib = ctypes.CDLL('/lib/x86_64-linux-gnu/libonlp.so')
+from sysLib import *
+ThermalLib = ctypes.CDLL(LIB_ONLP)
 
 class onlp_thermal_caps_t(ctypes.Structure):
     ONLP_THERMAL_CAPS_GET_TEMPERATURE = (1 << 0)

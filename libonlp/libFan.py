@@ -20,8 +20,8 @@
 
 import ctypes
 from time import sleep
-
-fanlib = ctypes.CDLL('/lib/x86_64-linux-gnu/libonlp.so')
+from sysLib import *
+fanlib = ctypes.CDLL(LIB_ONLP)
 
 # onlp_fan_caps
 class onlp_fan_caps_t(ctypes.Structure):

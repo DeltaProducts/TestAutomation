@@ -19,8 +19,8 @@
 """
 import ctypes
 from time import sleep
-
-psulib = ctypes.CDLL('/lib/x86_64-linux-gnu/libonlp.so')
+from sysLib import *
+psulib = ctypes.CDLL(LIB_ONLP)
 
 class onlp_oid_hdr_t(ctypes.Structure):
     _fields_ = [("id", ctypes.c_uint),
