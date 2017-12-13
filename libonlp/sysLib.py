@@ -38,19 +38,24 @@ class onlp_onie_info_t(ctypes.Structure):
     _fields_ = [("product_name",ctypes.c_char_p),
                 ("part_number",ctypes.c_char_p),
                 ("serial_number",ctypes.c_char_p),
-                ("MAC",ctypes.c_uint),
+                ("MAC",ctypes.c_ubyte * 6),
                 ("manufacture_date",ctypes.c_char_p),
-                ("device_version",ctypes.c_uint),
+                ("device_version",ctypes.c_ubyte),
                 ("label_revision",ctypes.c_char_p),
                 ("platform_name",ctypes.c_char_p),
                 ("onie_version",ctypes.c_char_p),
-                ("mac_range",ctypes.c_uint),
+                ("mac_range",ctypes.c_ushort),
                 ("manufacturer",ctypes.c_char_p),
                 ("country_code",ctypes.c_char_p),
                 ("vendor",ctypes.c_char_p),
                 ("diag_version",ctypes.c_char_p),
                 ("service_tag",ctypes.c_char_p),
-                ("crc",ctypes.c_uint * 32)]
+                ("crc",ctypes.c_uint),
+                ("list_head_t",ctypes.c_char_p * 2),
+                ("_hdr_id_string",ctypes.c_char_p),
+                ("_hdr_version",ctypes.c_ubyte),
+                ("_hdr_length",ctypes.c_ubyte),
+                ("_hdr_valid_crc",ctypes.c_ubyte)]
 
 class onlp_oid_hdr_t(ctypes.Structure):
     _fields_ = [("id", ctypes.c_uint),
@@ -78,8 +83,6 @@ class sys:
         self.onie_info = onlp_sys.onie_info
         self.platform = onlp_sys.platform
 
-syslist = [] #List to store the system object
-
 """
 Initialize the system API
 """
@@ -104,5 +107,6 @@ def get_sys():
     print "Country code: ",sys1.onie_info.country_code
     print "Diag Version: ",sys1.onie_info.diag_version
     print "ONIE Version: ",sys1.onie_info.onie_version
+    syslist=[]
     syslist.append(sys1)
     return syslist
