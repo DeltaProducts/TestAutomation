@@ -1,5 +1,4 @@
-from libFan import fan
-from libFan import get_fans
+from libFan import *
 
 from libThermal import thermal
 from libThermal import get_thermals

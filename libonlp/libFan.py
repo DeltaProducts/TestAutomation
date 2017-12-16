@@ -200,15 +200,14 @@ class fan:
     def set_rpm(self,user_rpm):
         if(self.caps & (1<<2)):
             fanlib.onlp_fan_rpm_set(self.fan_oid,user_rpm)
-            print "Setting rpm of",self.hdr.description,self.fan_oid," to ",user_rpm
-            sleep(10)
+            print "\nSetting rpm of",self.hdr.description," oid =",self.fan_oid," to ",user_rpm
+            #sleep(10)
             onlp_fan = onlp_fan_info_t()
             fanlib.onlp_fan_info_get(self.fan_oid, ctypes.byref(onlp_fan))
             print "RPM of",self.hdr.description,"(after setting):",onlp_fan.rpm,"\n"
             return onlp_fan.rpm
         else:
-            print "SET_RPM is not enabled for ",self.hdr.description
-            print "\n"
+            print("\nSET_RPM is not enabled for %s\n" % self.hdr.description)
     """
     Get the current rpm
     Parameter:Object of the class fan.For e.g. fanobj[0]
@@ -307,12 +306,59 @@ def get_fans():
     while(True):
         fanl = fan(fan_oid)
         if((fanl.status == 1) | (fanl.status == 5) | (fanl.status == 13)) :
-            print "fan:",fanl.hdr.description
+            print "\nfan:",fanl.hdr.description
             print "status:",fanl.status
             print "caps:",fanl.caps
-            print "\n"
             fanlist.append(fanl)
         else:
             break
         fan_oid = fan_oid + 1
     return fanlist
+
+"""
+Verify set rpm of all fans
+"""
+def verifyRPM(user_rpm=6000, tolerance=1000):
+
+    retry = 12 # times to retry
+    interval = 5 # seconds
+    num_match = 3
+
+    # Pass criteria user_rpm +- tolerance rpm
+    user_rpm_lower = (user_rpm - tolerance) if user_rpm > tolerance else 0
+    user_rpm_higher = user_rpm + tolerance
+
+    fanobj = get_fans() #List of fans and their statuses
+    count = len(fanobj) # Count the number of fans
+    print("The number of fans is : %d\n" % count)
+
+    for x in range(count):
+        fan.set_normal_speed(fanobj[x]) #Set speed to 8000 rpm
+        print("Fan %d , initial rpm %d" % (x,8000))
+
+    ret=0
+    num_fan_set_enable=0
+    for x in range(count):
+        rpm = fan.set_rpm(fanobj[x],user_rpm)
+        if rpm == None:
+            continue
+        num_fan_set_enable += 1
+        print("Expected rpm between [%d,%d]" % (user_rpm_lower,user_rpm_higher))
+        in_rpm_range=0
+        for i in range(retry):
+            rpm = fan.get_rpm(fanobj[x]) # read rpm
+            if (user_rpm_lower > rpm) or (rpm > user_rpm_higher):
+                print("Fan %d, rpm %5d, Wait for %s seconds..." % (x,rpm,interval))
+                sleep(interval)
+            elif (in_rpm_range < num_match):
+                in_rpm_range += 1
+                print("Fan %d, rpm %5d in range : %d , Wait for %s seconds..." %
+                        (x,rpm,in_rpm_range,interval))
+                sleep(interval)
+            else:
+                print("Fan %d, rpm %5d : pass" % (x,rpm))
+                ret += 1
+                break
+        fan.set_normal_speed(fanobj[x])
+    print("%d fans support set rpm" % num_fan_set_enable)
+    return (True if ret == num_fan_set_enable else False)
