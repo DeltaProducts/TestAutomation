@@ -182,7 +182,7 @@ class fan:
     Parameter:Object of the class fan.For e.g. fanobj[0]
     """
     def set_normal_speed(self):
-        fanlib.onlp_fan_rpm_set(self.fan_oid,8000)
+        fanlib.onlp_fan_rpm_set(self.fan_oid,6000)
 
     """
     Set rpm percentage to 47
@@ -217,7 +217,7 @@ class fan:
         if(self.caps & (1<<4)):
             onlp_fan = onlp_fan_info_t()
             fanlib.onlp_fan_info_get(self.fan_oid, ctypes.byref(onlp_fan))
-            print "RPM:",onlp_fan.rpm
+            #print "RPM:",onlp_fan.rpm
             return onlp_fan.rpm
 
     """
@@ -322,7 +322,7 @@ def verifyRPM(user_rpm=6000, tolerance=1000):
 
     retry = 12 # times to retry
     interval = 5 # seconds
-    num_match = 3
+    num_match = 2
 
     # Pass criteria user_rpm +- tolerance rpm
     user_rpm_lower = (user_rpm - tolerance) if user_rpm > tolerance else 0
@@ -334,7 +334,7 @@ def verifyRPM(user_rpm=6000, tolerance=1000):
 
     for x in range(count):
         fan.set_normal_speed(fanobj[x]) #Set speed to 8000 rpm
-        print("Fan %d , initial rpm %d" % (x,8000))
+        print("Fan %d , initial rpm %d" % (x,6000))
 
     ret=0
     num_fan_set_enable=0
@@ -356,7 +356,8 @@ def verifyRPM(user_rpm=6000, tolerance=1000):
                         (x,rpm,in_rpm_range,interval))
                 sleep(interval)
             else:
-                print("Fan %d, rpm %5d : pass" % (x,rpm))
+                in_rpm_range += 1
+                print("Fan %d, rpm %5d in range : %d : pass" % (x,rpm,in_rpm_range))
                 ret += 1
                 break
         fan.set_normal_speed(fanobj[x])
