@@ -183,6 +183,7 @@ class fan:
     """
     def set_normal_speed(self):
         fanlib.onlp_fan_rpm_set(self.fan_oid,6000)
+        print("\nSet fan normal rpm %d" % 6000)
 
     """
     Set rpm percentage to 47
@@ -190,6 +191,7 @@ class fan:
     """
     def set_normal_percent(self):
         fanlib.onlp_fan_percentage_set(self.fan_oid,47)
+        print("\nSet fan normal percent %d" % 47)
 
     """
     Set speed in RPM
@@ -201,7 +203,6 @@ class fan:
         if(self.caps & (1<<2)):
             fanlib.onlp_fan_rpm_set(self.fan_oid,user_rpm)
             print "\nSetting rpm of",self.hdr.description," oid =",self.fan_oid," to ",user_rpm
-            #sleep(10)
             onlp_fan = onlp_fan_info_t()
             fanlib.onlp_fan_info_get(self.fan_oid, ctypes.byref(onlp_fan))
             print "RPM of",self.hdr.description,"(after setting):",onlp_fan.rpm,"\n"
@@ -228,17 +229,15 @@ class fan:
     """
     def set_percent(self,user_percent):
         if(self.caps & (1 << 3)):
-            print "Setting Percentage of ",self.hdr.description,"to ",user_percent
+            print "\nSetting Percentage of ",self.hdr.description,"to ",user_percent
             fanlib.onlp_fan_percentage_set(self.fan_oid,user_percent)
-            sleep(10)
             onlp_fan = onlp_fan_info_t()
             fanlib.onlp_fan_info_get(self.fan_oid, ctypes.byref(onlp_fan))
             print "Current Percentage(after setting):",onlp_fan.percentage
-            print "\n"
             return onlp_fan.percentage
         else:
-            print "SET_PERCENTAGE is not enabled for",self.hdr.description
-            print "\n"
+            print "\nSET_PERCENTAGE is not enabled for ",self.hdr.description
+            return None
 
     """
     Get the fan speed in percentage
@@ -333,8 +332,7 @@ def verifyRPM(user_rpm=6000, tolerance=1000):
     print("The number of fans is : %d\n" % count)
 
     for x in range(count):
-        fan.set_normal_speed(fanobj[x]) #Set speed to 8000 rpm
-        print("Fan %d , initial rpm %d" % (x,6000))
+        fan.set_normal_speed(fanobj[x]) #Set speed to default rpm
 
     ret=0
     num_fan_set_enable=0
@@ -362,4 +360,49 @@ def verifyRPM(user_rpm=6000, tolerance=1000):
                 break
         fan.set_normal_speed(fanobj[x])
     print("%d fans support set rpm" % num_fan_set_enable)
+    return (True if ret == num_fan_set_enable else False)
+
+def verifyPercent(percent=30, tolerance=5):
+
+    retry = 12 # times to retry
+    interval = 5 # seconds
+    num_match = 2
+
+    # Pass criteria percent +- tolerance rpm
+    percent_lower = (percent - tolerance) if percent > tolerance else 0
+    percent_higher = percent + tolerance if (percent + tolerance) < 100 else 100
+
+    fanobj = get_fans() #List of fans and their statuses
+    count = len(fanobj) # Count the number of fans
+    print("The number of fans is : %d\n" % count)
+
+    for x in range(count):
+        fan.set_normal_percent(fanobj[x]) #Set speed to default percent
+
+    ret=0
+    num_fan_set_enable=0
+    for x in range(count):
+        tmp = fan.set_percent(fanobj[x],percent)
+        if tmp == None:
+            continue
+        num_fan_set_enable += 1
+        print("Expected percent between [%d,%d]" % (percent_lower,percent_higher))
+        in_pcent_range=0
+        for i in range(retry):
+            pcent = fan.get_percent(fanobj[x])
+            if (percent_lower > pcent) or (pcent > percent_higher):
+                print("Fan %d, percent %3d, Wait for %s seconds..." % (x,pcent,interval))
+                sleep(interval)
+            elif (in_pcent_range < num_match):
+                in_pcent_range += 1
+                print("Fan %d, percent %3d in range : %d , Wait for %s seconds..." %
+                        (x,pcent,in_pcent_range,interval))
+                sleep(interval)
+            else:
+                in_pcent_range += 1
+                print("Fan %d, percent %3d in range : %d : pass" % (x,pcent,in_pcent_range))
+                ret += 1
+                break
+        fan.set_normal_percent(fanobj[x])
+    print("%d fans support set percent" % num_fan_set_enable)
     return (True if ret == num_fan_set_enable else False)
