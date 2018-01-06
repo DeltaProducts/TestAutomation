@@ -103,6 +103,25 @@ ledlib.onlp_led_set.restype = ctypes.c_int
 
 
 class led:
+    CAPABILITY = ['ONLP_LED_CAPS_ON_OFF',
+                  'ONLP_LED_CAPS_CHAR',
+                  '','','','','','',
+                  '','',
+                  'ONLP_LED_CAPS_RED',
+                  'ONLP_LED_CAPS_RED_BLINKING',
+                  'ONLP_LED_CAPS_ORANGE',
+                  'ONLP_LED_CAPS_ORANGE_BLINKING',
+                  'ONLP_LED_CAPS_YELLOW',
+                  'ONLP_LED_CAPS_YELLOW_BLINKING',
+                  'ONLP_LED_CAPS_GREEN',
+                  'ONLP_LED_CAPS_GREEN_BLINKING',
+                  'ONLP_LED_CAPS_BLUE',
+                  'ONLP_LED_CAPS_BLUE_BLINKING',
+                  'ONLP_LED_CAPS_PURPLE',
+                  'ONLP_LED_CAPS_PURPLE_BLINKING',
+                  'ONLP_LED_CAPS_AUTO',
+                  'ONLP_LED_CAPS_AUTO_BLINKING']
+    STATE = ['OFF','ON']
     def __init__(self,id):
         ledlib.onlp_led_init()
         onlp_led = onlp_led_info_t()
@@ -113,6 +132,7 @@ class led:
         self.caps = onlp_led.caps
         self.mode = onlp_led.mode
         self.character = onlp_led.character
+        self.caps_list = self.get_caps()
 
     """
     Set the mode(color) of LED
@@ -120,13 +140,14 @@ class led:
     Parameter 2: user_mode
     """
     def set_mode(self,user_mode):
+        print "\nSetting mode to ",user_mode
         if(self.caps & (1 << user_mode)):
             ledlib.onlp_led_set(self.led_oid,1)
             ledlib.onlp_led_mode_set(self.led_oid,user_mode)
-            print "Setting mode to ",user_mode
             return True
         else:
-            print "LED not capable of setting mode to ",user_mode,". Check for capabilities using get_caps() function"
+            print "LED not capable of setting mode to ",user_mode
+            print self.caps_list
             return False
 
     """
@@ -135,12 +156,14 @@ class led:
     Parameter 2: user_state(0 for OFF/1 for ON)
     """
     def set_state(self,user_state):
+        print("Setting state for LED %s , oid %s to %s" %
+              (self.hdr.description, self.led_oid,self.STATE[user_state]))
         if(self.caps & (1<<0)):
-            print "Setting state for LED",self.hdr.description,self.led_oid," to ",user_state
             ledlib.onlp_led_set(self.led_oid,user_state)
             return True
         else:
-            print "This LED is not capable of turning ON and OFF.Check capabilities using get_caps() function"
+            print "This LED is not capable of turning ON and OFF."
+            print self.caps_list
             return False
 
     """
@@ -160,13 +183,11 @@ class led:
         index = []
         x = int(bin(self.caps)[2:])
         y = len(str(x))
-        capability = ['ONLP_LED_CAPS_ON_OFF','ONLP_LED_CAPS_CHAR','','','','','','','','','ONLP_LED_CAPS_RED','ONLP_LED_CAPS_RED_BLINKING','ONLP_LED_CAPS_ORANGE','ONLP_LED_CAPS_ORANGE_BLINKING','ONLP_LED_CAPS_YELLOW','ONLP_LED_CAPS_YELLOW_BLINKING','ONLP_LED_CAPS_GREEN','ONLP_LED_CAPS_GREEN_BLINKING','ONLP_LED_CAPS_BLUE','ONLP_LED_CAPS_BLUE_BLINKING','ONLP_LED_CAPS_PURPLE','ONLP_LED_CAPS_PURPLE_BLINKING','ONLP_LED_CAPS_AUTO','ONLP_LED_CAPS_AUTO_BLINKING']
+
         for i in range(y):
             if((x & (1 << i))!=0):
-                index.append(capability[i])
-        print "CAPS for",self.hdr.description," :",index
-        print "\n"
-        del index
+                index.append(self.CAPABILITY[i])
+        return index
 
     """
     Get the mode of a particular LED
@@ -176,7 +197,7 @@ class led:
     def get_mode(self):
         onlp_led = onlp_led_info_t()
         ledlib.onlp_led_info_get(self.led_oid, ctypes.byref(onlp_led))
-        print "Mode for LED ",self.hdr.description," :",onlp_led.mode
+        print "Color Mode :",self.CAPABILITY[onlp_led.mode]
         return onlp_led.mode
 
     """
@@ -191,7 +212,7 @@ class led:
             state = 1
         else:
             state = 0
-        print "State for LED ",self.hdr.description," :",state
+        print "State :",self.STATE[state]
         return state
 
     """
@@ -201,12 +222,14 @@ class led:
     def print_all(self):
         onlp_led = onlp_led_info_t()
         ledlib.onlp_led_info_get(self.led_oid, ctypes.byref(onlp_led))
-        print "led_oid: ",self.led_oid
-        print "description: ",onlp_led.hdr.description
-        print "status: ",onlp_led.status
-        print "caps: ",onlp_led.caps
-        print "mode: ",onlp_led.mode
-        print "character: ",onlp_led.character
+        print "\nled_oid:",self.led_oid
+        print "description:",onlp_led.hdr.description
+        print "status:",onlp_led.status
+        print "caps:",onlp_led.caps,self.caps_list
+        print "mode:",onlp_led.mode
+        self.get_mode()
+        print "character:",onlp_led.character
+        self.get_state()
 
     """
     Turn the LED on and set it to Mode 16(GREEN)
@@ -215,6 +238,7 @@ class led:
     def set_normal(self):
         ledlib.onlp_led_set(self.led_oid,1)
         ledlib.onlp_led_mode_set(self.led_oid,16)
+        print "\nTurn the LED on and set it to Mode 16(GREEN)\n"
 
 """
 Returns the list of LEDs
@@ -225,12 +249,10 @@ def get_leds():
 
     while(True):
         led1 = led(led_oid)
+        ledlist.append(led1)
+        led1.print_all()
         if((led1.status == 1)|(led1.status == 5)):
-            print "LED:",led1.hdr.description
-            print "status:",led1.status
-            print "caps:",led1.caps
             print "\n"
-            ledlist.append(led1)
         else:
             break
         led_oid = led_oid + 1

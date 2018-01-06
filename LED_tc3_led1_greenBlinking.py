@@ -29,12 +29,15 @@ ledobj = get_leds() #List of LEDs
 count = len(ledobj) #Total number of LEDs
 print "The count is : ",count
 
+if count < 1:
+    print("Skip this test case")
+    exit()
+
 led.set_normal(ledobj[0]) ##Set state to 1 and mode to GREEN
 
 valid = led.set_mode(ledobj[0],user_mode) #Set the LED to user_mode
 
 if valid:
-    sleep(3)
     currentState = led.get_mode(ledobj[0])
 else:
     DEBUG = False
@@ -49,3 +52,5 @@ if DEBUG:
 
     else:
         print "Test case failed"
+
+led.set_normal(ledobj[0]) ##Set state to 1 and mode to GREEN
