@@ -51,5 +51,3 @@ if DEBUG:
 
     else:
         print "Test case failed"
-
-led.set_normal(ledobj[2]) #Set state to 1 and mode to GREEN
